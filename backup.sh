@@ -36,16 +36,16 @@ mkdir -p "$BACKUP_DIR/rpm-gpg"
 mkdir -p "$BACKUP_DIR/home"
 
 echo "=== Backing up HOME directory (Plasma configs, Flatpak data, app settings) ==="
-sudo rsync -avhP "$ROOT_MNT/home/$USER_NAME/" "$BACKUP_DIR/home/"
+sudo rsync -avhP "$ROOT_MNT/home/$USER_NAME/" "$BACKUP_DIR/home/" 2>/dev/null
 
 echo "=== Backing up list of installed RPM packages ==="
-sudo rpm --root "$ROOT_MNT" -qa --qf "%{NAME}\n" > "$BACKUP_DIR/pkglist.txt"
+sudo rpm --root "$ROOT_MNT" -qa --qf "%{NAME}\n" > "$BACKUP_DIR/pkglist.txt" 2>/dev/null
 
 echo "=== Backing up list of installed Flatpaks ==="
 # Flatpak installation path inside root fs (no chroot needed)
 sudo flatpak list --app --columns=application > "$BACKUP_DIR/flatpaklist.txt" 2>/dev/null
 
-echo "=== Backing up list of installed DNF packages ==="
+echo "=== Backing up list of installed DNF packages (for a live system/useless from USB) ==="
 # Using repoquery to get only user-installed packages (excluding dependencies)
 sudo dnf repoquery --installed --queryformat "%{name}\n" > "$BACKUP_DIR/dnflist.txt" 2>/dev/null
 
