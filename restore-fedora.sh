@@ -15,9 +15,9 @@
 #   Example: /mnt/backup or /media/user/usb/backup
 # ============================================================
 
-BACKUP_DIR="/"   # <-- CHANGE THIS to your actual backup path
-USER_NAME=""   # <-- CHANGE THIS to your username
-OLD_UID=""                   # leave blank if you don't want to modify UID
+BACKUP_DIR="/run/media/yunidh/01DC43E33E3462D0/fedora-backup/"   # <-- CHANGE THIS to your actual backup path
+USER_NAME="yunidh"   # <-- CHANGE THIS to your username
+OLD_UID="1000"                   # leave blank if you don't want to modify UID
 
 # ============================================================
 
@@ -47,6 +47,14 @@ if [ -f "$BACKUP_DIR/pkglist.txt" ]; then
     sudo dnf install -y $(cat "$BACKUP_DIR/pkglist.txt")
 else
     echo "!!! ERROR: pkglist.txt not found in $BACKUP_DIR"
+fi
+
+echo "=== Restoring DNF packages ==="
+if [ -f "$BACKUP_DIR/dnflist.txt" ]; then
+    echo "=== Restoring DNF packages ==="
+    sudo dnf install -y $(cat "$BACKUP_DIR/dnflist.txt")
+else
+    echo "!!! ERROR: dnflist.txt not found in $BACKUP_DIR"
 fi
 
 echo "=== Restoring Flatpak apps ==="
