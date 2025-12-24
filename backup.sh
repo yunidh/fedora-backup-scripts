@@ -17,14 +17,19 @@
 #
 # ============================================================
 # CHANGE THESE to match your environment
-ROOT_MNT="/"               # where your Fedora root fs is mounted
-BACKUP_DIR="/run/media/yunidh/01DC43E33E3462D0/fedora-backup/"          # where your backup disk is mounted
-USER_NAME="yunidh"   # CHANGE THIS to your actual username
-
+ROOT_MNT=""               # where your Fedora root fs is mounted
+BACKUP_DIR=""         # where your backup disk is mounted
+USER_NAME=""   # CHANGE THIS to your actual username
 # ============================================================
 
-# Generate unique log filename with format: output<dd-mm-HHMM>.log
-LOG_FILE="output$(date +%d-%m-%H%M).log"
+# Add this after your variables to prevent accidental empty-path runs
+if [[ -z "$ROOT_MNT" || -z "$BACKUP_DIR" || -z "$USER_NAME" ]]; then
+    echo "ERROR: Please fill in the variables at the top of the script."
+    exit 1
+fi
+
+# Move the log to the backup folder so it's saved with your data
+LOG_FILE="$BACKUP_DIR/backup_$(date +%d-%m-%H%M).log"
 
 # Redirect all output: stdout to log, stderr to both console and log
 exec > "$LOG_FILE" 2> >(tee -a "$LOG_FILE" >&2)
@@ -35,11 +40,12 @@ mkdir -p "$BACKUP_DIR/yum.repos.d"
 mkdir -p "$BACKUP_DIR/rpm-gpg"
 mkdir -p "$BACKUP_DIR/home"
 
-echo "=== Backing up HOME directory (Plasma configs, Flatpak data, app settings) ==="
-sudo rsync -avhP "$ROOT_MNT/home/$USER_NAME/" "$BACKUP_DIR/home/" 2>/dev/null
+echo "=== Backing up essential directories ==="
+sudo rsync -avhPAX --exclude='.cache' --exclude='.local/share/Trash' "$ROOT_MNT/home/$USER_NAME/" "$BACKUP_DIR/home/" 2>/dev/null
+sudo rsync -avhPAX "$ROOT_MNT/etc/" "$BACKUP_DIR/etc/" 2>/dev/null
+sudo rsync -avhPAX "$ROOT_MNT/usr/local/" "$BACKUP_DIR/usr_local/" 2>/dev/null
+sudo rsync -avhPAX "$ROOT_MNT/opt/" "$BACKUP_DIR/opt/" 2>/dev/null
 
-echo "=== Backing up list of installed RPM packages ==="
-sudo rpm --root "$ROOT_MNT" -qa --qf "%{NAME}\n" > "$BACKUP_DIR/pkglist.txt" 2>/dev/null
 
 echo "=== Backing up list of installed Flatpaks ==="
 # Flatpak installation path inside root fs (no chroot needed)
@@ -50,10 +56,10 @@ echo "=== Backing up list of installed DNF packages (for a live system/useless f
 sudo dnf repoquery --installed --queryformat "%{name}\n" > "$BACKUP_DIR/dnflist.txt" 2>/dev/null
 
 echo "=== Backing up repository definitions (including 3rd-party repos) ==="
-sudo rsync -avhP "$ROOT_MNT/etc/yum.repos.d/" "$BACKUP_DIR/yum.repos.d/"
+sudo rsync -avhPAX "$ROOT_MNT/etc/yum.repos.d/" "$BACKUP_DIR/yum.repos.d/"
 
 echo "=== Backing up GPG keys for repos ==="
-sudo rsync -avhP "$ROOT_MNT/etc/pki/rpm-gpg/" "$BACKUP_DIR/rpm-gpg/"
+sudo rsync -avhPAX "$ROOT_MNT/etc/pki/rpm-gpg/" "$BACKUP_DIR/rpm-gpg/"
 
 
 
